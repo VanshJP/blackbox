@@ -1,12 +1,14 @@
-Blackbox
+**Blackbox**
 Blackbox is a SwiftUI app that helps users manage screen time, set personal goals, and track app usage. Built with Firebase for user authentication and data storage, it lets users block selected apps and view progress over time.
 
-Features
+**Features**
 User Accounts: Sign up and log in with Firebase for secure data storage.
 Goal Setting: Set screen time goals to limit app use.
 App Blocking (Real Devices Only): Choose apps to block (this feature requires testing on a real device).
 Personalized Preferences: Customize settings, with plans for more features like dark mode.
-Installation
+
+
+**Installation**
 Clone the Repo:
 bash
 Copy code
@@ -16,7 +18,9 @@ Open Blackbox.xcodeproj in Xcode.
 Firebase Setup:
 Add your GoogleService-Info.plist to the project for Firebase integration.
 Run on Real Device (for app blocking).
-User Stories
+
+
+**User Stories**
 Create an Account: Save preferences and track progress.
 Select Apps to Limit: Pick apps to block (on real devices).
 Set Goals: Track screen time goals to manage usage.
