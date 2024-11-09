@@ -18,111 +18,125 @@ struct HomeView: View {
     ]
     @State private var isAddingGoal = false
     @State private var showCompletionPopup = false
-
+    @State private var showUserView = false // State to show UserView
+    
     var body: some View {
-        ZStack {
-            VStack(spacing: 20) {
-                // Circular Timer
-                CircularTimerView(currentScreenTime: $currentScreenTime, dailyGoal: $dailyScreenTimeGoal)
-                
-                // Screen Time Info
-                HStack {
-                    Text("Current Screen Time")
-                        .font(.headline)
-                    Spacer()
-                    Text("\(formattedTime(currentScreenTime)) / \(formattedTime(dailyScreenTimeGoal))")
-                }
-                .padding()
-                
-                // Blocked Apps Section
-                VStack {
-                    Text("Blocked Apps")
-                        .font(.headline)
-                    ScrollView(.horizontal) {
-                        HStack(spacing: 20) {
-                            ForEach(appLimits, id: \.appName) { limit in
-                                VStack {
-                                    Image(systemName: limit.iconName) // Set app icons here
-                                        .resizable()
-                                        .frame(width: 40, height: 40)
-                                    Text(limit.appName)
+        NavigationView {
+            ZStack {
+                VStack(spacing: 20) {
+                    // Circular Timer
+                    CircularTimerView(currentScreenTime: $currentScreenTime, dailyGoal: $dailyScreenTimeGoal)
+                    
+                    // Screen Time Info
+                    HStack {
+                        Text("Current Screen Time")
+                            .font(.headline)
+                        Spacer()
+                        Text("\(formattedTime(currentScreenTime)) / \(formattedTime(dailyScreenTimeGoal))")
+                    }
+                    .padding()
+                    
+                    // Blocked Apps Section
+                    VStack {
+                        Text("Blocked Apps")
+                            .font(.headline)
+                        ScrollView(.horizontal) {
+                            HStack(spacing: 20) {
+                                ForEach(appLimits, id: \.appName) { limit in
+                                    VStack {
+                                        Image(systemName: limit.iconName) // Set app icons here
+                                            .resizable()
+                                            .frame(width: 40, height: 40)
+                                        Text(limit.appName)
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                .padding()
-                
-                // Goal Section
-                VStack(alignment: .leading) {
-                    HStack {
-                        Text("Goals")
-                            .font(.headline)
-                        Spacer()
-                        Button(action: {
-                            isAddingGoal = true
-                        }) {
-                            Image(systemName: "plus.circle.fill")
-                                .font(.title)
+                    .padding()
+                    
+                    // Goal Section
+                    VStack(alignment: .leading) {
+                        HStack {
+                            Text("Goals")
+                                .font(.headline)
+                            Spacer()
+                            Button(action: {
+                                isAddingGoal = true
+                            }) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.title)
+                            }
+                        }
+                        
+                        ForEach(goals) { goal in
+                            HStack {
+                                Text(goal.title)
+                                    .strikethrough(goal.isCompleted, color: .black)
+                                    .foregroundColor(goal.isCompleted ? .gray : .black)
+                                Spacer()
+                                Text("\(goal.rewardPoints)")
+                                Button(action: {
+                                    toggleGoalCompletion(goal: goal)
+                                }) {
+                                    Image(systemName: goal.isCompleted ? "checkmark.circle.fill" : "circle")
+                                        .foregroundColor(goal.isCompleted ? .green : .gray)
+                                }
+                            }
                         }
                     }
+                    .padding()
                     
-                    ForEach(goals) { goal in
-                        HStack {
-                            Text(goal.title)
-                                .strikethrough(goal.isCompleted, color: .black)
-                                .foregroundColor(goal.isCompleted ? .gray : .black)
-                            Spacer()
-                            Text("\(goal.rewardPoints)")
-                            Button(action: {
-                                toggleGoalCompletion(goal: goal)
-                            }) {
-                                Image(systemName: goal.isCompleted ? "checkmark.circle.fill" : "circle")
-                                    .foregroundColor(goal.isCompleted ? .green : .gray)
+                    // Set Time Goal Button
+                    Button(action: {
+                        isAppPickerPresented = true
+                    }) {
+                        Text("Choose Apps to Block")
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(8)
+                    }
+                    .familyActivityPicker(isPresented: $isAppPickerPresented, selection: $selectedApps)
+                }
+                .padding()
+                .sheet(isPresented: $isAddingGoal) {
+                    AddGoalView(goals: $goals, isAddingGoal: $isAddingGoal)
+                }
+                
+                // Completion Popup
+                if showCompletionPopup {
+                    VStack {
+                        Spacer()
+                        Text("🎉 Good Job! 🎉")
+                            .font(.title)
+                            .padding()
+                            .background(Color.green.opacity(0.9))
+                            .cornerRadius(10)
+                            .foregroundColor(.white)
+                        Spacer().frame(height: 150)
+                    }
+                    .transition(.move(edge: .top))
+                    .onAppear {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                            withAnimation {
+                                showCompletionPopup = false
                             }
                         }
                     }
                 }
-                .padding()
-                
-                // Set Time Goal Button
-                Button(action: {
-                    isAppPickerPresented = true
-                }) {
-                    Text("Choose Apps to Block")
-                        .padding()
-                        .background(Color.blue)
-                        .foregroundColor(.white)
-                        .cornerRadius(8)
-                }
-                .familyActivityPicker(isPresented: $isAppPickerPresented, selection: $selectedApps)
             }
-            .padding()
-            .sheet(isPresented: $isAddingGoal) {
-                AddGoalView(goals: $goals, isAddingGoal: $isAddingGoal)
-            }
-            
-            // Completion Popup
-            if showCompletionPopup {
-                VStack {
-                    Spacer()
-                    Text("🎉 Good Job! 🎉")
-                        .font(.title)
-                        .padding()
-                        .background(Color.green.opacity(0.9))
-                        .cornerRadius(10)
-                        .foregroundColor(.white)
-                    Spacer().frame(height: 150)
+            .navigationBarItems(leading: Button(action: {
+                showUserView = true
+            }) {
+                Image(systemName: "person.circle")
+                    .font(.title)
+            })
+            .background(
+                NavigationLink(destination: UserView(), isActive: $showUserView) {
+                    EmptyView()
                 }
-                .transition(.move(edge: .top))
-                .onAppear {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-                        withAnimation {
-                            showCompletionPopup = false
-                        }
-                    }
-                }
-            }
+            )
         }
     }
     
@@ -229,4 +243,5 @@ struct Goal: Identifiable {
 #Preview {
     HomeView()
 }
+
 
