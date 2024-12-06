@@ -54,7 +54,6 @@ struct SignUp: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .padding(.top, 50)
-        .background(Color(UIColor(red: 1.0, green: 0.98, blue: 0.94, alpha: 1.0)).ignoresSafeArea())
     }
     
     private func signUp() {
