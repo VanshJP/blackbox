@@ -1,59 +1,54 @@
-//
-//  SignUpView.swift
-//  blackbox
-//
-//  Created by Vansh Patel on 11/8/24.
-//
-
-
-
 import Foundation
 import SwiftUI
-
 import FirebaseAuth
-
 
 struct SignUp: View {
     @State private var name = ""
     @State private var email = ""
     @State private var password = ""
     @State private var confirmPassword = ""
-    @State private var errorMessage = ""  
+    @State private var errorMessage = ""
+    @State private var navigateToHome = false
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
-        VStack(spacing: 20) {
-            Image("logoface")
-                .resizable()
-                .scaledToFit()
-            
-            CustomTextField(placeholder: "Enter Your Name", text: $name)
-            CustomTextField(placeholder: "Enter Your Email", text: $email)
-            CustomSecureField(placeholder: "Enter Your Password", text: $password)
-            CustomSecureField(placeholder: "Confirm Your Password", text: $confirmPassword)
-            
-            if !errorMessage.isEmpty {
-                Text(errorMessage)
-                    .foregroundColor(.red)
-                    .font(.caption)
-            }
-            
-            Button(action: {
-                // Call signUp only if passwords match
-                if password == confirmPassword {
-                    signUp()  // Call signUp function to create Firebase user
-                } else {
-                    errorMessage = "Passwords do not match"
+        NavigationStack {
+            VStack(spacing: 20) {
+                Image("logoface")
+                    .resizable()
+                    .scaledToFit()
+                
+                CustomTextField(placeholder: "Enter Your Name", text: $name)
+                CustomTextField(placeholder: "Enter Your Email", text: $email)
+                CustomSecureField(placeholder: "Enter Your Password", text: $password)
+                CustomSecureField(placeholder: "Confirm Your Password", text: $confirmPassword)
+                
+                if !errorMessage.isEmpty {
+                    Text(errorMessage)
+                        .foregroundColor(.red)
+                        .font(.caption)
                 }
-            }) {
-                Text("Sign Up")
-                    .frame(width: 320, height: 50)
-                    .background(Color.black)
-                    .foregroundColor(.white)
-                    .cornerRadius(20)
+                
+                Button(action: {
+                    if password == confirmPassword {
+                        signUp()
+                    } else {
+                        errorMessage = "Passwords do not match"
+                    }
+                }) {
+                    Text("Sign Up")
+                        .frame(width: 320, height: 50)
+                        .background(Color.black)
+                        .foregroundColor(.white)
+                        .cornerRadius(20)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .padding(.top, 50)
+            .navigationDestination(isPresented: $navigateToHome) {
+                HomeView()
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .padding(.top, 50)
     }
     
     private func signUp() {
@@ -61,13 +56,23 @@ struct SignUp: View {
             if let error = error {
                 errorMessage = error.localizedDescription
             } else {
-                errorMessage = "Account created successfully!"
-                // Additional actions on success can go here
+                // Update user profile with name
+                if let user = Auth.auth().currentUser {
+                    let changeRequest = user.createProfileChangeRequest()
+                    changeRequest.displayName = name
+                    changeRequest.commitChanges { error in
+                        if let error = error {
+                            errorMessage = error.localizedDescription
+                        } else {
+                            // Success - navigate to HomeView
+                            navigateToHome = true
+                        }
+                    }
+                }
             }
         }
     }
 }
-
 
 struct CustomTextField: View {
     var placeholder: String
@@ -98,7 +103,6 @@ struct CustomSecureField: View {
             )
     }
 }
-
 
 #Preview {
     SignUp()
