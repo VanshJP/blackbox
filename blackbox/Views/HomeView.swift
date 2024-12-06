@@ -11,9 +11,9 @@ import MessageUI
 struct HomeView: View {
     @State private var selectedApps = FamilyActivitySelection()
     @State private var isAppPickerPresented = false
-    @State private var dailyScreenTimeGoal: Double = 5 * 60 // Default 5 hours in minutes
-    @State private var currentScreenTime: Double = 0 // Track current screen time in minutes
-    @State private var appLimits: [AppLimit] = []
+    @State private var dailyScreenTimeGoal: Double = 5 * 60 // default 5 hours in minutes
+    @State private var currentScreenTime: Double = 0 // track current screen time in minutes
+    @State private var appLimits: [AppLimit] = [] // list to hold app-specific limits
     @State private var goals: [Goal] = [
         Goal(title: "Hit Screen Time Goal", rewardPoints: 5),
         Goal(title: "Open Apps less than 5 times", rewardPoints: 5),
@@ -22,121 +22,110 @@ struct HomeView: View {
     ]
     @State private var isAddingGoal = false
     @State private var showCompletionPopup = false
-    @State private var showUserView = false
-    @State private var selectedTab: Tab = .home
+    @State private var showUserView = false // Tracks showing UserView
+    @State private var selectedTab: Tab = .home // Track selected tab
 
     var body: some View {
-        GeometryReader { geometry in
-            NavigationView {
-                VStack(spacing: 0) {
-                    ZStack {
-                        switch selectedTab {
-                        case .home:
-                            ScrollView {
-                                VStack(spacing: 20) {
-                                    Spacer(minLength: geometry.size.height * 0.02)
-
-                                    // Circular Timer
-                                    CircularTimerView(
-                                        currentScreenTime: $currentScreenTime,
-                                        dailyGoal: $dailyScreenTimeGoal
-                                    )
-                                    .frame(width: geometry.size.width * 0.6)
-                                    .onAppear {
-                                        requestAuthorization()
-                                        startMonitoringScreenTime()
-                                    }
-
-                                    // Screen Time Info
-                                    HStack {
-                                        Text("Current Screen Time")
-                                            .font(.headline)
-                                        Spacer()
-                                        Text("\(formattedTime(currentScreenTime)) / \(formattedTime(dailyScreenTimeGoal))")
-                                    }
-                                    .padding()
-
-                                    // Blocked Apps Section
-                                    VStack(alignment: .leading) {
-                                        Text("Blocked Apps")
-                                            .font(.headline)
-                                        ScrollView(.horizontal) {
-                                            HStack(spacing: 20) {
-                                                ForEach(appLimits, id: \.appName) { limit in
-                                                    VStack {
-                                                        Image(systemName: limit.iconName)
-                                                            .resizable()
-                                                            .scaledToFit()
-                                                            .frame(width: geometry.size.width * 0.1)
-                                                        Text(limit.appName)
-                                                            .font(.caption)
-                                                    }
-                                                }
-                                            }
-                                        }
-                                    }
-                                    .padding()
-
-                                    // Goal Section
-                                    VStack(alignment: .leading) {
-                                        HStack {
-                                            Text("Goals")
-                                                .font(.headline)
-                                            Spacer()
-                                            Button(action: {
-                                                isAddingGoal = true
-                                            }) {
-                                                Image(systemName: "plus.circle.fill")
-                                                    .font(.title)
-                                            }
-                                        }
-
-                                        ForEach(goals) { goal in
-                                            HStack {
-                                                Text(goal.title)
-                                                    .strikethrough(goal.isCompleted, color: .black)
-                                                    .foregroundColor(goal.isCompleted ? .gray : .black)
-                                                Spacer()
-                                                Text("\(goal.rewardPoints) pts")
-                                                    .font(.subheadline)
-                                                Button(action: {
-                                                    toggleGoalCompletion(goal: goal)
-                                                }) {
-                                                    Image(systemName: goal.isCompleted ? "checkmark.circle.fill" : "circle")
-                                                        .foregroundColor(goal.isCompleted ? .green : .gray)
-                                                }
-                                            }
-                                        }
-                                    }
-                                    .padding()
-
-                                    // Set Time Goal Button
-                                    Button(action: {
-                                        isAppPickerPresented = true
-                                    }) {
-                                        Text("Choose Apps to Block")
-                                            .padding()
-                                            .frame(maxWidth: .infinity)
-                                            .background(Color.blue)
-                                            .foregroundColor(.white)
-                                            .cornerRadius(8)
-                                    }
-                                    .familyActivityPicker(isPresented: $isAppPickerPresented, selection: $selectedApps)
+        NavigationView {
+            VStack(spacing: 0) {
+                // Main content
+                ZStack {
+                    switch selectedTab {
+                    case .home:
+                        ScrollView {
+                            VStack(spacing: 20) {
+                                Spacer(minLength: 40) // Move content slightly downward
+                                // Circular Timer
+                                CircularTimerView(currentScreenTime: $currentScreenTime, dailyGoal: $dailyScreenTimeGoal)
+                                
+                                // Screen Time Info
+                                HStack {
+                                    Text("Current Screen Time")
+                                        .font(.headline)
+                                    Spacer()
+                                    Text("\(formattedTime(currentScreenTime)) / \(formattedTime(dailyScreenTimeGoal))")
                                 }
                                 .padding()
+                                
+                                // Blocked Apps Section
+                                VStack {
+                                    Text("Blocked Apps")
+                                        .font(.headline)
+                                    ScrollView(.horizontal) {
+                                        HStack(spacing: 20) {
+                                            ForEach(appLimits, id: \.appName) { limit in
+                                                VStack {
+                                                    Image(systemName: limit.iconName) // Set app icons here
+                                                        .resizable()
+                                                        .frame(width: 40, height: 40)
+                                                    Text(limit.appName)
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                .padding()
+                                
+                                // Goal Section
+                                VStack(alignment: .leading) {
+                                    HStack {
+                                        Text("Goals")
+                                            .font(.headline)
+                                        Spacer()
+                                        Button(action: {
+                                            isAddingGoal = true
+                                        }) {
+                                            Image(systemName: "plus.circle.fill")
+                                                .font(.title)
+                                        }
+                                    }
+                                    
+                                    ForEach(goals) { goal in
+                                        HStack {
+                                            Text(goal.title)
+                                                .strikethrough(goal.isCompleted, color: .black)
+                                                .foregroundColor(goal.isCompleted ? .gray : .black)
+                                            Spacer()
+                                            Text("\(goal.rewardPoints)")
+                                            Button(action: {
+                                                toggleGoalCompletion(goal: goal)
+                                            }) {
+                                                Image(systemName: goal.isCompleted ? "checkmark.circle.fill" : "circle")
+                                                    .foregroundColor(goal.isCompleted ? .green : .gray)
+                                            }
+                                        }
+                                    }
+                                }
+                                .padding()
+                                
+                                // Set Time Goal Button
+                                Button(action: {
+                                    isAppPickerPresented = true
+                                }) {
+                                    Text("Choose Apps to Block")
+                                        .padding()
+                                        .background(Color.blue)
+                                        .foregroundColor(.white)
+                                        .cornerRadius(8)
+                                }
+                                .familyActivityPicker(isPresented: $isAppPickerPresented, selection: $selectedApps)
                             }
-                            .sheet(isPresented: $isAddingGoal) {
-                                AddGoalView(goals: $goals, isAddingGoal: $isAddingGoal)
-                            }
-                        case .insights:
-                            CenteredTextView(text: "Insights Screen")
-                        case .accountability:
-                            AccountabilityView()
+                            .padding()
                         }
+                        .sheet(isPresented: $isAddingGoal) {
+                            AddGoalView(goals: $goals, isAddingGoal: $isAddingGoal)
+                        }
+                    case .insights:
+                        CenteredTextView(text: "Insights Screen")
+                    case .accountability:
+                        AccountabilityView()
                     }
-
-                    // Bottom Tab Bar
-                    HStack {
+                }
+                
+                // Bottom Tab Bar
+                HStack(spacing: 0) {  // Set spacing to 0 to have full control over the layout
+                    // First third
+                    GeometryReader { geometry in
                         TabBarItem(
                             icon: "house",
                             label: "Home",
@@ -144,7 +133,13 @@ struct HomeView: View {
                         ) {
                             selectedTab = .home
                         }
-                        Spacer()
+                        .frame(width: geometry.size.width)
+                        .frame(maxHeight: .infinity)
+                    }
+                    .frame(maxWidth: .infinity)
+                    
+                    // Middle third
+                    GeometryReader { geometry in
                         TabBarItem(
                             icon: "chart.bar.xaxis",
                             label: "Insights",
@@ -152,7 +147,13 @@ struct HomeView: View {
                         ) {
                             selectedTab = .insights
                         }
-                        Spacer()
+                        .frame(width: geometry.size.width)
+                        .frame(maxHeight: .infinity)
+                    }
+                    .frame(maxWidth: .infinity)
+                    
+                    // Last third
+                    GeometryReader { geometry in
                         TabBarItem(
                             icon: "checkmark.seal",
                             label: "Accountability",
@@ -160,74 +161,28 @@ struct HomeView: View {
                         ) {
                             selectedTab = .accountability
                         }
+                        .frame(width: geometry.size.width)
+                        .frame(maxHeight: .infinity)
                     }
-                    .padding(.horizontal, geometry.size.width * 0.04)
-                    .padding(.top, geometry.size.height * 0.01)
-                    .padding(.bottom, geometry.size.height * 0.02)
-                    .background(Color.white)
+                    .frame(maxWidth: .infinity)
                 }
-                .background(Color.white.ignoresSafeArea())
-                .navigationBarItems(trailing: Button(action: {
-                    showUserView = true
-                }) {
-                    Image(systemName: "person.circle")
-                        .font(.title)
-                })
-                .background(
-                    NavigationLink(destination: UserView(), isActive: $showUserView) {
-                        EmptyView()
-                    }
-                )
+                .frame(height: 75)
+                .background(Color.white)
+                
             }
-        }
-    }
-
-    /// Request authorization for screen time data
-    func requestAuthorization() {
-        AuthorizationCenter.shared.requestAuthorization { result in
-            switch result {
-            case .success:
-                print("Authorization granted")
-            case .failure(let error):
-                print("Authorization failed: \(error.localizedDescription)")
-            }
-        }
-    }
-
-    /// Starts monitoring screen time and updates the `currentScreenTime`.
-    func startMonitoringScreenTime() {
-        let activityName = DeviceActivityName("dailyActivity")
-
-        let schedule = DeviceActivitySchedule(
-            intervalStart: DateComponents(hour: 0, minute: 0),
-            intervalEnd: DateComponents(hour: 23, minute: 59),
-            repeats: true
-        )
-
-        do {
-            try DeviceActivityCenter().startMonitoring(activityName, during: schedule)
-            print("Monitoring started successfully.")
-            fetchScreenTime(for: activityName)
-        } catch {
-            print("Error starting monitoring: \(error.localizedDescription)")
-        }
-    }
-
-    func fetchScreenTime() {
-        let context = DeviceActivityReport.Context.family
-        let report = DeviceActivityReport(for: context)
-
-        report.data(for: Date()) { result in
-            switch result {
-            case .success(let reportData):
-                // Process the data to calculate total screen time
-                let totalScreenTime = reportData.categoryUsage.values.reduce(0, +)
-                DispatchQueue.main.async {
-                    self.currentScreenTime = totalScreenTime / 60 // Convert seconds to minutes
+            .background(Color.white.ignoresSafeArea()) // Make the entire background white
+            .edgesIgnoringSafeArea(.bottom) // Ensure the bar is fixed to the bottom
+            .navigationBarItems(trailing: Button(action: {
+                showUserView = true
+            }) {
+                Image(systemName: "person.circle")
+                    .font(.title)
+            })
+            .background(
+                NavigationLink(destination: UserView(), isActive: $showUserView) {
+                    EmptyView()
                 }
-            case .failure(let error):
-                print("Error fetching screen time: \(error.localizedDescription)")
-            }
+            )
         }
     }
 
@@ -250,14 +205,11 @@ struct HomeView: View {
 }
 
 // MARK: - Accountability View
-import MessageUI
-
 struct AccountabilityView: View {
     @State private var contacts: [Contact] = []
     @State private var showContactPicker = false
     @State private var contactToRemove: Contact?
     @State private var showConfirmationDialog = false
-    @State private var errorMessage: String?
 
     var body: some View {
         VStack(spacing: 20) {
@@ -266,10 +218,10 @@ struct AccountabilityView: View {
                 .bold()
             
             Text("Add some friends and family that will be alerted once you reach certain thresholds on your time constraints!")
-                .font(.subheadline)
-                .foregroundColor(.gray)
-                .multilineTextAlignment(.center)
-                .padding(.horizontal)
+                            .font(.subheadline)
+                            .foregroundColor(.gray)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
 
             List {
                 ForEach(contacts) { contact in
@@ -300,16 +252,7 @@ struct AccountabilityView: View {
         }
         .padding()
         .sheet(isPresented: $showContactPicker) {
-            MultipleContactPicker(contacts: $contacts, onContactSelected: sendMessageToContact)
-        }
-        .alert(isPresented: .constant(errorMessage != nil)) {
-            Alert(
-                title: Text("Error"),
-                message: Text(errorMessage ?? "Unknown error"),
-                dismissButton: .default(Text("OK")) {
-                    errorMessage = nil
-                }
-            )
+            MultipleContactPicker(contacts: $contacts)
         }
         .confirmationDialog(
             "Are you sure you want to remove \(contactToRemove?.name ?? contactToRemove?.phoneNumber ?? "") as an Accountability Contact?",
@@ -325,19 +268,6 @@ struct AccountabilityView: View {
         }
     }
 
-    func sendMessageToContact(_ contact: Contact) {
-        if MFMessageComposeViewController.canSendText() {
-            let messageBody = "You've been added as an accountability contact!"
-            let messageSender = MessageSender(message: messageBody, recipient: contact.phoneNumber)
-            UIApplication.shared.windows.first?.rootViewController?.present(
-                UIHostingController(rootView: messageSender),
-                animated: true
-            )
-        } else {
-            errorMessage = "This device cannot send text messages."
-        }
-    }
-
     func removeContact(_ contact: Contact) {
         contacts.removeAll { $0.id == contact.id }
     }
@@ -346,7 +276,6 @@ struct AccountabilityView: View {
 // MARK: - Multiple Contact Picker
 struct MultipleContactPicker: UIViewControllerRepresentable {
     @Binding var contacts: [Contact]
-    var onContactSelected: (Contact) -> Void // Callback when a contact is selected
     @Environment(\.presentationMode) var presentationMode
 
     func makeUIViewController(context: Context) -> CNContactPickerViewController {
@@ -369,52 +298,17 @@ struct MultipleContactPicker: UIViewControllerRepresentable {
             self.parent = parent
         }
 
-        func contactPicker(_ picker: CNContactPickerViewController, didSelect contact: CNContact) {
-            let phoneNumber = contact.phoneNumbers.first?.value.stringValue ?? "No Phone"
-            let name = CNContactFormatter.string(from: contact, style: .fullName) ?? "No Name"
-            let newContact = Contact(phoneNumber: phoneNumber, name: name)
-            parent.contacts.append(newContact)
-            parent.onContactSelected(newContact) // Trigger the callback
+        func contactPicker(_ picker: CNContactPickerViewController, didSelect contacts: [CNContact]) {
+            for contact in contacts {
+                let phoneNumber = contact.phoneNumbers.first?.value.stringValue ?? "No Phone"
+                let name = CNContactFormatter.string(from: contact, style: .fullName) ?? "No Name"
+                parent.contacts.append(Contact(phoneNumber: phoneNumber, name: name))
+            }
             parent.presentationMode.wrappedValue.dismiss()
         }
 
         func contactPickerDidCancel(_ picker: CNContactPickerViewController) {
             parent.presentationMode.wrappedValue.dismiss()
-        }
-    }
-}
-
-struct MessageSender: UIViewControllerRepresentable {
-    var message: String
-    var recipient: String
-
-    func makeUIViewController(context: Context) -> MFMessageComposeViewController {
-        let controller = MFMessageComposeViewController()
-        controller.body = message
-        controller.recipients = [recipient] // Individual recipient
-        controller.messageComposeDelegate = context.coordinator
-        return controller
-    }
-
-    func updateUIViewController(_ uiViewController: MFMessageComposeViewController, context: Context) {}
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator()
-    }
-
-    class Coordinator: NSObject, MFMessageComposeViewControllerDelegate {
-        func messageComposeViewController(_ controller: MFMessageComposeViewController, didFinishWith result: MessageComposeResult) {
-            switch result {
-            case .cancelled:
-                print("Message cancelled by the user.")
-            case .failed:
-                print("Message sending failed.")
-            case .sent:
-                print("Message sent successfully.")
-            @unknown default:
-                print("An unknown error occurred.")
-            }
-            controller.dismiss(animated: true)
         }
     }
 }
@@ -439,12 +333,12 @@ struct CircularTimerView: View {
                 .trim(from: 0, to: CGFloat(min(currentScreenTime / dailyGoal, 1.0)))
                 .stroke(currentScreenTime <= dailyGoal ? Color.green : Color.red, lineWidth: 15)
                 .rotationEffect(.degrees(-90))
-                .animation(.easeInOut, value: currentScreenTime)
+                .animation(.linear, value: currentScreenTime)
             Text(formattedTime(currentScreenTime))
                 .font(.title)
                 .bold()
         }
-        .aspectRatio(1, contentMode: .fit)
+        .frame(width: 200, height: 200)
     }
 
     func formattedTime(_ minutes: Double) -> String {
@@ -558,6 +452,3 @@ struct HomeView_Previews: PreviewProvider {
         HomeView()
     }
 }
-
-
-
