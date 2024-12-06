@@ -5,7 +5,6 @@
 //  Created by Vansh Patel on 11/8/24.
 //
 
-
 import Foundation
 import SwiftUI
 
@@ -14,7 +13,7 @@ import SwiftUI
 struct SignIn: View {
 
     @State var viewModel = SignInViewModel()
-    
+    @State private var isSignedIn = false
     
     var body: some View {
         NavigationView {
@@ -28,8 +27,11 @@ struct SignIn: View {
                 FirebaseSecureField(placeholder: "Password", showPassword: $viewModel.showPassword, text: $viewModel.password)
                 
                 Button(action: {
-                    viewModel.SignInWithEmail()
-                    
+                    viewModel.SignInWithEmail { success in
+                        if success {
+                            isSignedIn = true
+                        }
+                    }
                 }) {
                     Text("Sign In")
                         .frame(width: 320, height: 50)
@@ -54,6 +56,11 @@ struct SignIn: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
             .padding(.top, 50)
             .background(Color(UIColor(red: 1.0, green: 0.98, blue: 0.94, alpha: 1.0)).ignoresSafeArea())
+            .background(
+                NavigationLink(destination: HomeView(), isActive: $isSignedIn) {
+                    EmptyView()
+                }
+            )
         }
     }
 }
