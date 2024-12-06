@@ -18,15 +18,18 @@ struct HomeView: View {
     @State private var showCompletionPopup = false
     @State private var showUserView = false // Tracks showing UserView
     @State private var selectedTab: Tab = .home // Track selected tab
+    @State private var userPoints: Int = 0 // Track user's total points
 
     // Predefined bank of goals
     private let goalsBank = [
         Goal(title: "Hit Screen Time Goal", rewardPoints: 5),
         Goal(title: "Open Apps less than 5 times", rewardPoints: 5),
         Goal(title: "Complete Mental Check-In", rewardPoints: 5),
-        Goal(title: "Hit 10 Day Streak", rewardPoints: 5),
+        Goal(title: "Hit 3 Day Streak", rewardPoints: 3),
+        Goal(title: "Hit 5 Day Streak", rewardPoints: 5),
+        Goal(title: "Hit 10 Day Streak", rewardPoints: 10),
         Goal(title: "Don't Open 3 Apps", rewardPoints: 5),
-        Goal(title: "Don't Send Any Accountability Messages", rewardPoints: 5)
+        Goal(title: "Don't Send Accountability Text", rewardPoints: 5)
     ]
     
     // Randomly selected goals
@@ -40,8 +43,8 @@ struct HomeView: View {
                     switch selectedTab {
                     case .home:
                         ScrollView {
-                            VStack(spacing: 20) {
-                                Spacer(minLength: 40) // Move content slightly downward
+                            VStack(spacing: 10) {
+                                Spacer(minLength: 5) // Move content slightly downward
                                 // Circular Timer
                                 CircularTimerView(currentScreenTime: $currentScreenTime, dailyGoal: $dailyScreenTimeGoal)
                                 
@@ -59,7 +62,7 @@ struct HomeView: View {
                                     Text("Blocked Apps")
                                         .font(.headline)
                                     ScrollView(.horizontal) {
-                                        HStack(spacing: 20) {
+                                        HStack(spacing: 5) {
                                             ForEach(appLimits, id: \.appName) { limit in
                                                 VStack {
                                                     Image(systemName: limit.iconName) // Set app icons here
@@ -105,7 +108,7 @@ struct HomeView: View {
                                             }
                                         }
                                         .frame(height: 50) // Fixed height for each goal row
-                                        .padding(.vertical, 5) // Add some vertical padding
+                                        .padding(.vertical, 1) // Add some vertical padding
                                     }
                                 }
                                 .padding()
@@ -186,17 +189,29 @@ struct HomeView: View {
             }
             .background(Color.white.ignoresSafeArea()) // Make the entire background white
             .edgesIgnoringSafeArea(.bottom) // Ensure the bar is fixed to the bottom
-            .navigationBarItems(trailing: Button(action: {
-                showUserView = true
-            }) {
-                Image(systemName: "person.circle")
-                    .font(.title)
+            .navigationBarItems(trailing: HStack(spacing: 10) {
+                Text("Points: \(userPoints)")
+                    .font(.headline)
+                    .foregroundColor(.blue)
+                Button(action: {
+                    showUserView = true
+                }) {
+                    Image(systemName: "person.circle")
+                        .font(.title)
+                }
             })
             .background(
                 NavigationLink(destination: UserView(), isActive: $showUserView) {
                     EmptyView()
                 }
             )
+            .alert(isPresented: $showCompletionPopup) {
+                Alert(
+                    title: Text("🎉 Congratulations!"),
+                    message: Text("All Goals Completed! Here's 5 extra points!"),
+                    dismissButton: .default(Text("OK"))
+                )
+            }
         }
     }
 
@@ -210,9 +225,13 @@ struct HomeView: View {
         if let index = displayedGoals.firstIndex(where: { $0.id == goal.id }) {
             displayedGoals[index].isCompleted.toggle()
             if displayedGoals[index].isCompleted {
-                withAnimation {
-                    showCompletionPopup = true
-                }
+                userPoints += goal.rewardPoints
+            }
+            
+            // Check if all goals are completed
+            if displayedGoals.allSatisfy({ $0.isCompleted }) {
+                userPoints += 5 // Add bonus points for completing all goals
+                showCompletionPopup = true
             }
         }
     }
