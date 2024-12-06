@@ -155,8 +155,8 @@ struct HomeView: View {
                     // Last third
                     GeometryReader { geometry in
                         TabBarItem(
-                            icon: "checkmark.seal",
-                            label: "Accountability",
+                            icon: "person.2.fill",
+                            label: "Teams",
                             isSelected: selectedTab == .accountability
                         ) {
                             selectedTab = .accountability
