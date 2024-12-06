@@ -12,18 +12,25 @@ struct HomeView: View {
     @State private var selectedApps = FamilyActivitySelection()
     @State private var isAppPickerPresented = false
     @State private var dailyScreenTimeGoal: Double = 5 * 60 // default 5 hours in minutes
-    @State private var currentScreenTime: Double = 0 // track current screen time in minutes
+    @State private var currentScreenTime: Double = 4 * 60 // track current screen time in minutes
     @State private var appLimits: [AppLimit] = [] // list to hold app-specific limits
-    @State private var goals: [Goal] = [
-        Goal(title: "Hit Screen Time Goal", rewardPoints: 5),
-        Goal(title: "Open Apps less than 5 times", rewardPoints: 5),
-        Goal(title: "Complete Mental Check-In", rewardPoints: 5),
-        Goal(title: "Hit 10 Day Streak", rewardPoints: 5)
-    ]
     @State private var isAddingGoal = false
     @State private var showCompletionPopup = false
     @State private var showUserView = false // Tracks showing UserView
     @State private var selectedTab: Tab = .home // Track selected tab
+
+    // Predefined bank of goals
+    private let goalsBank = [
+        Goal(title: "Hit Screen Time Goal", rewardPoints: 5),
+        Goal(title: "Open Apps less than 5 times", rewardPoints: 5),
+        Goal(title: "Complete Mental Check-In", rewardPoints: 5),
+        Goal(title: "Hit 10 Day Streak", rewardPoints: 5),
+        Goal(title: "Don't Open 3 Apps", rewardPoints: 5),
+        Goal(title: "Don't Send Any Accountability Messages", rewardPoints: 5)
+    ]
+    
+    // Randomly selected goals
+    @State private var displayedGoals: [Goal] = []
 
     var body: some View {
         NavigationView {
@@ -66,27 +73,30 @@ struct HomeView: View {
                                 }
                                 .padding()
                                 
-                                // Goal Section
+                                // Random Goals Section
                                 VStack(alignment: .leading) {
                                     HStack {
                                         Text("Goals")
                                             .font(.headline)
                                         Spacer()
                                         Button(action: {
-                                            isAddingGoal = true
+                                            shuffleGoals() // Shuffle goals when the refresh button is tapped
                                         }) {
-                                            Image(systemName: "plus.circle.fill")
+                                            Image(systemName: "arrow.triangle.2.circlepath.circle.fill")
                                                 .font(.title)
                                         }
                                     }
-                                    
-                                    ForEach(goals) { goal in
+
+                                    ForEach(displayedGoals) { goal in
                                         HStack {
                                             Text(goal.title)
                                                 .strikethrough(goal.isCompleted, color: .black)
                                                 .foregroundColor(goal.isCompleted ? .gray : .black)
+                                                .lineLimit(1) // Ensure single-line text
+                                                .frame(maxWidth: .infinity, alignment: .leading) // Align text to the left
                                             Spacer()
                                             Text("\(goal.rewardPoints)")
+                                                .frame(width: 40, alignment: .trailing) // Fixed width for reward points
                                             Button(action: {
                                                 toggleGoalCompletion(goal: goal)
                                             }) {
@@ -94,6 +104,8 @@ struct HomeView: View {
                                                     .foregroundColor(goal.isCompleted ? .green : .gray)
                                             }
                                         }
+                                        .frame(height: 50) // Fixed height for each goal row
+                                        .padding(.vertical, 5) // Add some vertical padding
                                     }
                                 }
                                 .padding()
@@ -111,9 +123,12 @@ struct HomeView: View {
                                 .familyActivityPicker(isPresented: $isAppPickerPresented, selection: $selectedApps)
                             }
                             .padding()
+                            .onAppear {
+                                shuffleGoals() // Shuffle goals when the view appears
+                            }
                         }
                         .sheet(isPresented: $isAddingGoal) {
-                            AddGoalView(goals: $goals, isAddingGoal: $isAddingGoal)
+                            AddGoalView(goals: $displayedGoals, isAddingGoal: $isAddingGoal)
                         }
                     case .insights:
                         CenteredTextView(text: "Insights Screen")
@@ -168,7 +183,6 @@ struct HomeView: View {
                 }
                 .frame(height: 75)
                 .background(Color.white)
-                
             }
             .background(Color.white.ignoresSafeArea()) // Make the entire background white
             .edgesIgnoringSafeArea(.bottom) // Ensure the bar is fixed to the bottom
@@ -193,14 +207,18 @@ struct HomeView: View {
     }
 
     private func toggleGoalCompletion(goal: Goal) {
-        if let index = goals.firstIndex(where: { $0.id == goal.id }) {
-            goals[index].isCompleted.toggle()
-            if goals[index].isCompleted {
+        if let index = displayedGoals.firstIndex(where: { $0.id == goal.id }) {
+            displayedGoals[index].isCompleted.toggle()
+            if displayedGoals[index].isCompleted {
                 withAnimation {
                     showCompletionPopup = true
                 }
             }
         }
+    }
+
+    private func shuffleGoals() {
+        displayedGoals = Array(goalsBank.shuffled().prefix(3)) // Select 3 random goals
     }
 }
 
