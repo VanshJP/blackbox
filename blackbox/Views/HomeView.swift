@@ -134,7 +134,7 @@ struct HomeView: View {
                             AddGoalView(goals: $displayedGoals, isAddingGoal: $isAddingGoal)
                         }
                     case .insights:
-                        CenteredTextView(text: "Insights Screen")
+                        InsightsView()
                     case .accountability:
                         AccountabilityView()
                     }
